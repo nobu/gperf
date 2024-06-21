@@ -1188,7 +1188,7 @@ Output::output_string_pool () const
 /* ------------------------------------------------------------------------- */
 
 static void
-output_keyword_entry (KeywordExt *temp, int stringpool_index, const char *indent, bool is_duplicate)
+output_keyword_entry (KeywordExt *temp, int stringpool_index, const char *stringpool_type, const char *indent, bool is_duplicate)
 {
   if (option[TYPE])
     output_line_directive (temp->_lineno);
@@ -1209,7 +1209,8 @@ output_keyword_entry (KeywordExt *temp, int stringpool_index, const char *indent
        - The types 'long' and 'unsigned long' do work as well, but on 64-bit
          native Windows platforms, they don't have the same size as pointers
          and therefore generate warnings.  */
-    printf ("(int)(size_t)&((struct %s_t *)0)->%s_str%d",
+    printf ("(%s)(size_t)&((struct %s_t *)0)->%s_str%d",
+            stringpool_type,
             option.get_stringpool_name (), option.get_stringpool_name (),
             stringpool_index);
   else
@@ -1277,6 +1278,28 @@ output_keyword_blank_entries (int count, const char *indent)
     }
 }
 
+static size_t
+compute_stringpool_size (KeywordExt_List *temp)
+{
+  size_t stringpool_size = 0;
+  for (; temp; temp = temp->rest())
+    {
+      KeywordExt *keyword = temp->first();
+      stringpool_size += keyword->_allchars_length;
+
+      if (keyword->_duplicate_link) // implies option[DUP]
+        for (KeywordExt *links = keyword->_duplicate_link; links; links = links->_duplicate_link)
+          if (!(links->_allchars_length == keyword->_allchars_length
+                && memcmp (links->_allchars, keyword->_allchars,
+                           keyword->_allchars_length) == 0))
+            {
+              stringpool_size += links->_allchars_length;
+            }
+    }
+
+  return stringpool_size;
+}
+
 /* Prints out the array containing the keywords for the hash function.  */
 
 void
@@ -1300,9 +1323,13 @@ Output::output_keyword_table () const
       printf ("#endif\n");
     }
 
+  const char *wordlist_eltype = _struct_tag;
+  if (option[SHAREDLIB])
+    wordlist_eltype = smallest_integral_type (compute_stringpool_size (_head));
+
   printf ("%sstatic ",
           indent);
-  output_const_type (const_readonly_array, _wordlist_eltype);
+  output_const_type (const_readonly_array, wordlist_eltype);
   printf ("%s[] =\n"
           "%s  {\n",
           option.get_wordlist_name (),
@@ -1333,7 +1360,7 @@ Output::output_keyword_table () const
 
       keyword->_final_index = index;
 
-      output_keyword_entry (keyword, index, indent, false);
+      output_keyword_entry (keyword, index, wordlist_eltype, indent, false);
 
       /* Deal with duplicates specially.  */
       if (keyword->_duplicate_link) // implies option[DUP]
@@ -1347,7 +1374,7 @@ Output::output_keyword_table () const
                           keyword->_allchars_length) == 0
                ? keyword->_final_index
                : links->_final_index);
-            output_keyword_entry (links, stringpool_index, indent, true);
+            output_keyword_entry (links, stringpool_index, wordlist_eltype, indent, true);
           }
 
       index++;
