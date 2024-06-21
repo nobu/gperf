@@ -898,7 +898,7 @@ Output::output_hash_function () const
     {
       /* Trivial case: No key positions at all.  */
       printf ("  return %s;\n",
-              _hash_includes_len ? "len" : "0");
+              _hash_includes_len ? "(unsigned int) len" : "0");
     }
   else
     {
@@ -919,7 +919,7 @@ Output::output_hash_function () const
              contain 'unsigned char's or 'unsigned short's.  */
 
           printf ("  return %s",
-                  _hash_includes_len ? "len + " : "");
+                  _hash_includes_len ? "(unsigned int) len + " : "");
 
           if (_key_positions.get_size() == 2
               && _key_positions[0] == 0
@@ -965,7 +965,7 @@ Output::output_hash_function () const
                   "  switch (%s)\n"
                   "    {\n"
                   "      default:\n",
-                  register_scs, _hash_includes_len ? "len" : "0",
+                  register_scs, _hash_includes_len ? "(unsigned int) len" : "0",
                   _hash_includes_len ? "hval" : "len");
 
           while (key_pos != Positions::LASTCHAR && key_pos >= _max_key_len)

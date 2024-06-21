@@ -77,7 +77,7 @@ hash (register const char *str, register size_t len)
       19, 19, 19, 19, 19, 19, 19, 19, 19, 19,
       19, 19, 19, 19, 19, 19
     };
-  return len + asso_values[(unsigned char)str[2]] + asso_values[(unsigned char)str[0]];
+  return (unsigned int) len + asso_values[(unsigned char)str[2]] + asso_values[(unsigned char)str[0]];
 }
 
 struct month *

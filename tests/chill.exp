@@ -78,7 +78,7 @@ hash (str, len)
       1050, 1050, 1050, 1050, 1050, 1050, 1050, 1050, 1050, 1050,
       1050, 1050, 1050, 1050, 1050, 1050, 1050
     };
-  register unsigned int hval = len;
+  register unsigned int hval = (unsigned int) len;
 
   switch (hval)
     {
